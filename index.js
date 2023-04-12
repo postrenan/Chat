@@ -21,11 +21,6 @@ io.on('connection', (socket) => {
   });
 });
 
-io.on('connection', (socket) => {
-  socket.on('chat message', (msg) => {
-    console.log('message: ' + msg);
-  });
-});
 
 io.emit('some event', { someProperty: 'some value', otherProperty: 'other value' });
 
@@ -34,8 +29,8 @@ io.on('connection', (socket) => {
 });
 
 io.on('connection', (socket) => {
-  socket.on('chat message', (msg) => {
-    io.emit('chat message', msg);
+  socket.on('chat message', (data) => {
+    io.emit('chat message', `${data.name}: ${data.msg}`);
   });
 });
 
