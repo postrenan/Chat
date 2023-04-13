@@ -2,95 +2,90 @@
 <html lang="pt-BR">
   <head>
     <title>Socket.IO chat</title>
-    
-    <style>
-      body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: gray;}
-  
-      #form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px); }
-      #input { border: none; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }
-      #input:focus { outline: none; }
-      #form > button { background: #333; border: none; padding: 0 1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
-      
-      #header { background: #333; color: #fff; padding: 0.5rem; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; }
-      #header h1 { margin: 0; font-size: 1.5rem; }
-      #header button { background: #fff; border: none; padding: 0.5rem 1rem; border-radius: 3px; outline: none; color: #333; }
-      
-      #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages > li { padding: 0.5rem 1rem; }
-      #messages > li:nth-child(odd) { background: white; }
-
-      .hidden{
-        visibility: hidden;
-      }
-    </style>
+    <link rel="stylesheet" href="/style.css">
   </head>
   <body>
+    <div id="modal">
+      <h1>Put your name</h1>
+      <form>
+        <input type="text" id="userName" placeholder="Name">
+      </form>
+      <button id="btn-modal" onclick="modalVerification()">Submit</button>
+    </div>
+
     <div id="header">
-      <h1>Chat Privado</h1>
+      <h1>Private Chat</h1>
       <div>
         <select name="rooms" id="private-room" onchange="roomSelect(value)" >
-          <option value="mainRoom">Sala inicial</option>
+          <option value="mainRoom">Main room</option>
           <option value="roomOne">room 1</option>
           <option value="roomTwo">room 2</option>
         </select>
-        <button onclick="getout()" id="leave-chat">Sair</button>
+        <button onclick="getOut()" id="leave-chat">Exit</button>
       </div>
     </div>
-    <ul class="hidden" id="mainRoom"></ul>
-    <ul class="hidden" id="roomOne"></ul>
-    <ul class="hidden" id="roomTwo"></ul>
+    <ul id="messages"></ul>
     <form id="form">
-      <input type="text" id="input" placeholder="Digite sua mensagem aqui">
-      <button>Enviar</button>
+      <input type="text" id="input" placeholder="Text">
+      <button >Send</button>
     </form>
   </body>
+
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    var socket = io();
+    let socket = io();
+    let room = 'mainRoom';
 
-    var messages = document.getElementById('mainRoom');
-    messages.classList.remove('hidden');
-    var form = document.getElementById('form');
-    var input = document.getElementById('input');
+    let messages = document.getElementById('messages');
+    let form = document.getElementById('form');
+    let input = document.getElementById('input');
+
+    let name = document.getElementById('userName');
+    function modalVerification() {
+      if(name){
+        const modal = document.getElementById("modal");
+        modal.style.display= "none";
+      }
+
+    }
+    socket.emit('new user', name);//pede nome de usuário
 
     //envia mensagem pro servidor
     form.addEventListener('submit', function(e) {
       e.preventDefault();
       if (input.value) {
-        socket.emit('chat message', { name: name, msg: input.value });
+        socket.emit('message', { name: name.value, msg: input.value, room });
         input.value = '';
       }
     });
 
     //recebe a mensagem do servidor
-    socket.on('chat message', function(msg) {
-      var item = document.createElement('li');
+    socket.on('message', function(msg) {
+      let item = document.createElement('li');
+      item.classList.add("li");
       item.textContent = msg;
       messages.appendChild(item);
       window.scrollTo(0, document.body.scrollHeight);
     });
 
-    //pede nome de usuário
-    var name = prompt('Qual é o seu nome?');
-    while(name == ''){
-      alert('prencha com seu nome para entrar no chat')
-      var name = prompt('Qual é o seu nome?');
-    }
-    alert('Olá ' + name + ', seja bem vindo ao chat público!');
-    socket.emit('new user', name);
+    function getOut(){
+      window.location.replace("www.google.com");
+    }//redireciona para o google
 
-    //redireciona para o google
-    function getout(){
-      window.location.replace("http://www.google.com");
+    function roomSelect(value){
+      room = value;
+      socket.emit('turnRoom', value);
+      messages.innerHTML = '';
+    }
+    function restoreMsg(chatMessages){
+      messages.innerHTML = chatMessages;
     }
 
-    //mudança de sala
-    function roomSelect(num){
-      messages.classList.add('hidden');
-      messages = document.getElementById(num);
-      messages.classList.remove('hidden');
+    if(room){
+      socket.on('turnRoom', restoreMsg){
 
-      console.log(num);
+      }
     }
+
   </script>
 </html>

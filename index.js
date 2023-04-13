@@ -8,29 +8,28 @@ const io = new Server(server);
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
-  });
-
-io.on('connection', (socket) => {
-  console.log('a user connected');
+});
+app.get('/style.css', (req, res) => {
+  res.sendFile(__dirname + '/style.css');
 });
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  console.log(`a user connected `);
+  let msg;
+  let chatMessages = [];
+
+  socket.on('message', ({ name, room, msg }) => {
+    io.to(room).emit('message', `${name}: ${msg}`);
+    chatMessages.push(`${name}: ${msg}`);
+  });
+
+  socket.on('turnRoom',  (value) => {
+    socket.join(value);
+    socket.emit(chatMessages);
+  });
+
   socket.on('disconnect', () => {
     console.log('user disconnected');
-  });
-});
-
-
-io.emit('some event', { someProperty: 'some value', otherProperty: 'other value' });
-
-io.on('connection', (socket) => {
-  socket.broadcast.emit('hi');
-});
-
-io.on('connection', (socket) => {
-  socket.on('chat message', (data) => {
-    io.emit('chat message', `${data.name}: ${data.msg}`);
   });
 });
 
